@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankRebateRecordMapper">
+    <resultMap id="BaseResultMap" type="com.spark.bitrade.repository.entity.BtBankRebateRecord">
+        <!--@mbg.generated-->
+        <!--@Table bt_bank_rebate_record-->
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="miner_member_id" jdbcType="BIGINT" property="minerMemberId"/>
+        <result column="miner_balance_transaction_id" jdbcType="BIGINT" property="minerBalanceTransactionId"/>
+        <result column="miner_reward_type" jdbcType="TINYINT" property="minerRewardType"/>
+        <result column="reward_amount" jdbcType="DECIMAL" property="rewardAmount"/>
+        <result column="rebate_member_id" jdbcType="BIGINT" property="rebateMemberId"/>
+        <result column="rebate_type" jdbcType="TINYINT" property="rebateType"/>
+        <result column="rebate_amount" jdbcType="DECIMAL" property="rebateAmount"/>
+        <result column="ref_id" jdbcType="BIGINT" property="refId"/>
+        <result column="rebate_level" jdbcType="INTEGER" property="rebateLevel"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id, miner_member_id, miner_balance_transaction_id, miner_reward_type, reward_amount,
+        rebate_member_id, rebate_type, rebate_amount, ref_id, rebate_level, create_time,
+        update_time
+    </sql>
+    <select id="getRebateRecordAndNamePage" resultType="com.spark.bitrade.api.vo.BtBankRebateRecordVO">
+
+        select
+        <include refid="Base_Column_List"></include>
+        , username FROM
+        (
+        SELECT
+        rr.*,
+        m.username
+        FROM
+        bt_bank_rebate_record AS rr
+        LEFT JOIN member AS m ON rr.miner_member_id = m.id where rr.rebate_member_id=#{memberId}
+        ORDER BY create_time desc ) AS t
+    </select>
+
+    <select id="getMyReward1" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 活动奖励('红包体验金活动','抢单挖矿红包','抢单挖矿红包','幸运大转盘奖励','后台充值')
+        ，商家OTC出售奖励，平台补贴，每日收益排行奖励，每日推广收益排行奖励，大宗挖矿利息，竞猜分红 -->
+        SELECT id,amount,member_id,type,create_time,ref_id,
+        CASE
+        WHEN `type` = 22 THEN
+        '增值活动收益'
+        WHEN `type` = 6 AND ISNULL(ref_id) THEN
+        '充值奖励'
+        WHEN `type` = 54 THEN
+        '每日推广收益排行奖励'
+        WHEN `type` = 63 THEN
+        '竞猜分红'
+        WHEN `type` = 56 THEN
+        '大宗挖矿利息'
+        WHEN `type` = 53 THEN
+        '每日收益排行奖励'
+        WHEN `type` = 76 THEN
+        '新矿工体验金释放'
+        WHEN `type` = 82 THEN
+        '新人福利挖矿利息'
+        WHEN `type` = 83 THEN
+        '新人福利挖矿直推佣金'
+        WHEN `type` = 86 THEN
+        '增值福利挖矿利息'
+        WHEN `type` = 87 THEN
+        '增值福利挖矿直推佣金'
+        ELSE `comment`
+        END AS `comment`,
+        0 isSub
+        FROM member_transaction
+        where
+        (
+        type in (49,50,53,54,56,63,76,82,83,86,87)
+        or comment in ('红包体验金活动','抢单挖矿红包','抢单挖矿红包','幸运大转盘奖励')
+        or (type = 6 and ISNULL(ref_id))
+        or (type = 22 AND create_time > '2019-11-18 00:00:00' AND comment != 'BT锁仓活动（用户锁仓本金）解锁')
+        )
+        and symbol = 'BT' and member_id = #{memberId}
+    </select>
+
+    <select id="getMyReward2" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 活动奖励-推荐有效矿工 -->
+        SELECT mt.id,mt.amount,mt.member_id,mt.type,mt.create_time,mt.ref_id,mt.comment,1 isSub,m.username FROM
+        member_transaction mt
+        LEFT JOIN activity_red_pack_receive_record ar ON ar.id = mt.ref_id
+        LEFT JOIN member m ON m.id = sub_member_id
+        where mt.type=6 and mt.comment in ('推荐有效矿工红包') and mt.symbol = 'BT' and mt.member_id =#{memberId}
+    </select>
+
+    <select id="getMyReward3" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- STO推荐奖励 23 -->
+        SELECT lm.id,lm.reward_amount amount,lm.member_id,lm.update_time create_time,'STO推荐奖励' as comment,
+        case when lm.ref_invitee_id = lm.ref_lock_member_id then 1 else 2 end isSub,
+        m.username
+        FROM lock_market_reward_detail lm
+        LEFT JOIN member m ON m.id = lm.ref_lock_member_id
+        where symbol = 'BT' and record_status = 2 and member_id = #{memberId}
+    </select>
+
+    <select id="getMyReward4" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 大宗挖矿直推佣金 67-->
+        SELECT fa.id,fa.recommend_release_amount amount,fa.inviter_id member_id,fa.recommend_release_time create_time,
+        '大宗挖矿直推佣金' as comment, 1 isSub, fa.member_name username
+        FROM financial_activity_join_details fa
+        where fa.recommend_status = 1 and fa.unit = 'BT' and fa.inviter_id = #{memberId} and is_receive=1
+    </select>
+
+    <select id="getMyReward5" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 直属矿工推荐奖励47，金牌矿工奖励48-->
+        SELECT
+        rr.id,rr.rebate_amount amount,rr.create_time,rr.rebate_member_id member_id,
+        case when rr.rebate_level>1 then 2 else 1 end isSub,
+        case when rr.rebate_type>0 then '金牌矿工奖励' else '直属矿工推荐奖励' end as comment,
+        m.username
+        FROM
+        bt_bank_rebate_record AS rr
+        LEFT JOIN member AS m ON rr.miner_member_id = m.id where rr.rebate_member_id=#{memberId}
+        ORDER BY create_time desc
+    </select>
+
+    <select id="getMyReward6" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- BT挖矿收益 -->
+        select id,money amount,member_id,create_time,ref_id,'BT挖矿收益' as comment,0 isRecommend
+        from bt_bank_miner_balance_transaction where type in (4,7,9) and member_id =#{memberId}
+    </select>
+
+    <select id="getMyReward7" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 活期宝收益 -->
+        select id,income_amount amount,member_id,null type ,FROM_UNIXTIME(create_time/1000,'%Y-%m-%d %h:%m:%s')
+        create_time,ref_id,'活期宝收益' as comment,0 isRecommend
+        from lock_hqb_income_record where coin_symbol ='BT' and member_id =#{memberId}
+    </select>
+
+    <select id="getMyReward8" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 企业矿工挖矿奖励 -->
+        select id,reward amount,member_id,create_time,ref_id,'企业矿工挖矿奖励' as comment,0 isRecommend
+        from enterprise_miner_transaction where type=4 and member_id =#{memberId}
+    </select>
+
+    <select id="getMyReward9" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 商家挖矿佣金 -->
+        select bmo.id,bmo.reward_amount amount,bmo.buy_id memberId,bmo.update_time createTime,bmo.ref_id,'商家挖矿佣金' as
+        comment,0 isRecommend
+        from
+        business_miner_order bmo
+        left join otc_order oo on oo.order_sn = bmo.ref_id
+        where bmo.status in (3,5) and oo.release_time is not null and bmo.buy_id =#{memberId}
+    </select>
+
+    <select id="getMyReward10" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 直推佣金 -->
+        SELECT
+        r.id,
+        r.release_amount amount,
+        r.inviter_id member_id,
+        r.release_type type,
+        r.update_time create_time,
+        NULL AS ref_id,
+        '直推佣金' AS `comment`,
+        1 isSub ,
+        m.username
+        FROM
+        member_experience_release_record r LEFT JOIN member m ON r.member_id = m.id
+        WHERE
+        r.release_type = 2 AND r.inviter_id=#{memberId}
+    </select>
+
+
+    <select id="getRecordsCreatedAfter" resultType="com.spark.bitrade.api.dto.RebateRecordDTO">
+        select id, rebate_member_id from bt_bank_rebate_record rr where rr.create_time &gt;= #{date}
+    </select>
+    <select id="getMyReward11" resultType="com.spark.bitrade.api.vo.MyRewardVO">
+        <!-- 代还手续费返还 -->
+        SELECT
+        r.id,
+        r.amount,
+        r.member_id,
+        r.create_time create_time,
+        NULL AS ref_id,
+        '代还手续费返还' AS `comment`,
+        0 isSub ,
+        m.username
+        FROM
+        member_transaction r LEFT JOIN member m ON r.member_id = m.id
+        WHERE
+        r.member_id=#{memberId} AND type=79
+    </select>
+</mapper>

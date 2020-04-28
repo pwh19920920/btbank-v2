@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.MemberAssetStatisticsMapper">
+
+    <!--<resultMap id="BaseResultMap" type="com.spark.bitrade.repository.entity.MemberAssetStatistics">-->
+        <!--<result column="member_id" jdbcType="BIGINT" property="memberId"/>-->
+        <!--<result column="mobile_phone" jdbcType="VARCHAR" property="mobilePhone"/>-->
+        <!--<result column="real_name" jdbcType="VARCHAR" property="realName"/>-->
+        <!--<result column="mobile_phone" jdbcType="VARCHAR" property="mobilePhone"/>-->
+        <!--<result column="miner_grade" jdbcType="VARCHAR" property="minerGrade"/>-->
+        <!--<result column="lock_coin" jdbcType="DECIMAL" property="lockCoin"/>-->
+        <!--<result column="hqb_balance" jdbcType="DECIMAL" property="hqbBalance"/>-->
+        <!--<result column="bttotal_balance" jdbcType="DECIMAL" property="bttotalBalance"/>-->
+        <!--<result column="invite_people" jdbcType="INTEGER" property="invitePeople"/>-->
+        <!--<result column="day_reward_sum" jdbcType="DECIMAL" property="dayRewardSum"/>-->
+        <!--<result column="got_reward_sum" jdbcType="DECIMAL" property="gotRewardSum"/>-->
+        <!--<result column="unlock_coin_today" jdbcType="DECIMAL" property=""/>-->
+    <!--</resultMap>-->
+    <delete id="deleteAll">
+        DELETE  from member_asset_statistics
+    </delete>
+
+    <insert id="insertBath">
+        INSERT INTO member_asset_statistics  ( member_id,
+        mobile_phone,
+        real_name,
+        miner_grade,
+        lock_coin,
+        hqb_balance,
+        bttotal_balance,
+        invite_people,
+        day_reward_sum,
+        got_reward_sum,
+        unlock_coin_today )
+        VALUES
+        <foreach collection="memberAssetStatistics" item="memberAsset" separator=",">
+            (#{memberAsset.memberId},#{memberAsset.mobilePhone}, #{memberAsset.realName},
+            #{memberAsset.minerGrade}, #{memberAsset.lockCoin}, #{memberAsset.hqbBalance},
+            #{memberAsset.bttotalBalance},#{memberAsset.bttotalBalance},#{memberAsset.invitePeople},
+            #{memberAsset.dayRewardSum},#{memberAsset.gotRewardSum},#{memberAsset.unlockCoinToday}
+            )
+        </foreach>
+    </insert>
+    <select id="queryUserAsset" parameterType="com.spark.bitrade.repository.entity.MemberAssetStatistics" resultType="com.spark.bitrade.repository.entity.MemberAssetStatistics">
+       SELECT
+			member.id as member_id ,member.mobile_phone,member.real_name,
+			( CASE IFNULL(btmb.miner_grade,0)
+			WHEN 0 THEN '普通矿工'
+			WHEN 1 THEN '银牌矿工'
+			WHEN 2 THEN '金牌矿工'
+			ELSE '金牌矿工' END )  as miner_grade,
+              -- 矿池总额
+              IFNULL( sum(lcd.total_amount), 0 ) lock_coin ,
+              -- 活期余额
+                    ( select  IFNULL( (lhqb.lock_amount + lhqb.plan_in_amount), 0 ) from lock_hqb_member_wallet lhqb WHERE lhqb.coin_symbol='BT' AND lhqb.member_id =  member.id )  as hqb_balance,
+                    -- 矿池总额
+                    IFNULL((btmb.balance_amount + btmb.lock_amount), 0 ) bttotal_balance,
+              -- 推荐人数
+                   ( SELECT count(member1.id)  FROM member as  member1 WHERE  member1.inviter_id  = member.id  ) as invite_people ,
+              -- 矿池今日收益
+                    ( (
+                SELECT   IFNULL(sum(money),0)
+                FROM bt_bank_miner_balance_transaction btmr
+                WHERE create_time <![CDATA[>=]]> #{startTime} AND  #{endTime}    <![CDATA[>=]]>  create_time    AND type in (4,7,9)
+                and btmr.member_id     = member.id
+                ) +
+                    (
+                select IFNULL(sum(mt.amount) ,0)  from member_transaction mt where mt.type  in(47,48)  and mt.symbol = 'BT' and
+                create_time <![CDATA[>=]]> #{startTime} AND  #{endTime}    <![CDATA[>=]]>  create_time
+                and mt.member_id   =    member.id
+                )
+                    ) day_reward_sum,
+                    -- 矿池总收益
+                    ( (
+                SELECT
+                IFNULL(sum(money), 0)
+                FROM
+                bt_bank_miner_balance_transaction btmr
+                WHERE
+                type IN (4, 7, 9)
+                AND btmr.member_id = member.id
+                ) + (
+                SELECT
+                IFNULL(sum(mt.amount), 0)
+                FROM
+                member_transaction mt
+                WHERE
+                mt.type IN (47, 48)
+                AND mt.member_id = member.id and mt.symbol = 'BT'
+                ) ) as got_reward_sum,
+               -- 理财账户当日释放
+			(
+			  SELECT  sum(amount)  total_amount from member_transaction mt where   mt.member_id  =   member.id  AND type =22 and `comment` is not NULL  AND mt.symbol  = 'BT' AND
+              create_time  <![CDATA[>=]]> #{startTime} AND #{endTime}    <![CDATA[>=]]>  create_time
+			) unlock_coin_today
+			FROM member
+			LEFT JOIN  lock_coin_detail lcd  ON lcd.member_id =  member.id  AND lcd.coin_unit = 'BT'  AND lcd.status = 0  AND ref_activitie_id IN (32, 33, 34, 35)
+			LEFT JOIN  bt_bank_miner_balance btmb ON member.id = btmb.member_id
+			GROUP  by member.id
+    </select>
+</mapper>

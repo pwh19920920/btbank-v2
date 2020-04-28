@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.OtcOrderMapper">
+
+
+    <select id="getNeedDispatchMemberIds" resultType="java.lang.Long">
+
+    select aoh.member_id
+    from advertise_operation_history aoh
+    LEFT JOIN member m on m.id = aoh.member_id
+    LEFT JOIN finc_member_account ma on ma.member_id =  aoh.member_id
+
+    where aoh.`advertise_type` = 1
+    and (m.member_level=2 or not ISNULL(ma.id))
+    GROUP BY aoh.member_id
+
+    </select>
+    <select id="getNeedDispatchDateList" resultType="java.util.Date">
+        SELECT
+        date(oo.release_time) dt
+        FROM
+        otc_order oo
+        WHERE
+        oo.sale_reward_status = 0
+        AND oo.advertise_type = 1
+        AND NOT ISNULL(oo.release_time) AND oo.release_time <![CDATA[<]]> DATE(NOW())
+        group by dt
+    </select>
+    <select id="getNeedDispatchOrdersOrder" resultType="com.spark.bitrade.repository.entity.OtcOrder">
+
+        SELECT
+		oo.*
+	FROM
+		otc_order oo
+	WHERE
+	oo.sale_reward_status = 0
+	AND oo.advertise_type = 1
+	AND not ISNULL(oo.release_time);
+    </select>
+
+    <select id="queryOtcorderCnt" resultType="java.lang.Integer">
+        select count(1) from business_miner_order bmo LEFT JOIN otc_order oo on bmo.ref_id = oo.order_sn
+        where bmo.status != oo.status
+    </select>
+
+    <select id="queryFixOrders" resultType="com.spark.bitrade.api.dto.FixOrderDto">
+        select bmo.id as id,bmo.status as currentStatus,oo.status as passStatus from business_miner_order bmo LEFT JOIN otc_order oo on bmo.ref_id = oo.order_sn
+        where bmo.status != oo.status  and bmo.status != 6
+    </select>
+
+    <update id="updateOtcOrderStaus">
+        update business_miner_order bmo inner JOIN otc_order oo on bmo.ref_id = oo.order_sn
+        set bmo.status = oo.status
+        where bmo.status != oo.status
+    </update>
+
+    <update id="updateFixOtcOrderStaus">
+        update business_miner_order bmo
+        set bmo.status = #{fixOrderDto.passStatus}, update_time = now()
+        where bmo.status = #{fixOrderDto.currentStatus}
+        and bmo.id = #{fixOrderDto.id}
+    </update>
+
+</mapper>

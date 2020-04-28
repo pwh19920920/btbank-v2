@@ -1,0 +1,25 @@
+server:
+  port: 6201
+  context-path: /uc2
+
+spring:
+  application:
+    name: SERVICE-UCENTER
+  cloud:
+    nacos:
+      config:
+        file-extension: yml
+        shared-dataids: application-v2.yml
+        server-addr: ${nacos.host:nacos.btbank.local}:${nacos.port:8848}
+      discovery:
+        server-addr: ${nacos.host:nacos.btbank.local}:${nacos.port:8848}
+    service-registry:
+      auto-registration:
+        enabled: true
+
+jasypt:
+  encryptor:
+    password: tP7tFW0qH092eUgkgmRSwxpsgMdNLkjg1bkLtzvYcaIa8VSmJULh6IyO1DC9czGj7lKILD7oXivyDAGQPxrsrjCvMCX/POF9DZ8M2Jo+ZOOwKp16LKdhgQ==
+
+#logging:
+#  config: classpath:log/logback.xml

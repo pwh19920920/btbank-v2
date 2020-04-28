@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.MinerPrizeQuizeTransactionMapper">
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id,member_id,prie_quize_id,amount,create_time,prize_quize_result,prize_quize_type,guess_status,reward,reward_release_time,release_status,reward_status,update_time,user_name,ref_id,real_name,mobile_phone,reward_ref_id,release_ref_id
+    </sql>
+
+    <select id="queryTotal" parameterType="java.lang.Long" resultType="com.spark.bitrade.api.vo.MinerPrizeQuizeVo">
+        SELECT count(id) as total_num , IFNULL( sum(amount),0)  as total_amount from miner_prize_quize_transaction where  prie_quize_id = #{prieQuizeId}
+    </select>
+    <select id="queryUpTotal" parameterType="java.lang.Long" resultType="com.spark.bitrade.api.vo.MinerPrizeQuizeVo">
+        SELECT count(id) as up_num , IFNULL( sum(amount),0)   as up_amount from miner_prize_quize_transaction where prize_quize_type = 1
+        and prie_quize_id = #{prieQuizeId}
+    </select>
+    <select id="queryDownTotal" parameterType="java.lang.Long" resultType="com.spark.bitrade.api.vo.MinerPrizeQuizeVo">
+        SELECT count(id) as down_num ,IFNULL( sum(amount),0)   as down_amout from miner_prize_quize_transaction where prize_quize_type = 0
+        and prie_quize_id = #{prieQuizeId}
+    </select>
+
+    <select id="queryMaxAmount" parameterType="java.lang.Long"  resultType="com.spark.bitrade.repository.entity.MinerPrizeQuizeTransaction">
+        select max(amount) as amount, id,member_id ,id,member_id,prie_quize_id,create_time,prize_quize_result,prize_quize_type,guess_status,reward,reward_release_time,release_status,reward_status,update_time,user_name,ref_id,real_name,mobile_phone,reward_ref_id,release_ref_id
+        from miner_prize_quize_transaction where prie_quize_id = #{prieQuizeId} and guess_status = 1 limit 1
+    </select>
+    <select id="getMinerTransaction" parameterType="java.lang.Long" resultType="com.spark.bitrade.api.vo.MinerPrizeQuizeVo" >
+        select tr.member_id as memberId,r.reward_result_time as rewardResultTime,tr.prize_quize_type as prizeQuizeResult,tr.amount,tr.guess_status as guessStatus,tr.reward
+        from miner_prize_quize_transaction tr left join prize_quize_record r on tr.prie_quize_id = r.id
+        where tr.member_id = #{memberId}
+        ORDER BY rewardResultTime desc
+    </select>
+
+
+
+</mapper>

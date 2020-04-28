@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.RankRewardTransactionMapper">
+
+
+    <select id="getDayReward" resultType="com.spark.bitrade.repository.entity.RankRewardTransaction">
+        SELECT IFNULL(m.username,m.mobile_phone) username, a.amount as minerProfit,a.member_id as memberId,1 rewardType from
+              (SELECT member_id,SUM(money) as amount from bt_bank_miner_balance_transaction WHERE type in (4,7,9) and DATE(create_time) = #{dayTime} GROUP BY member_id ORDER BY SUM(money) DESC limit 10) a
+        LEFT JOIN member m on m.id = a.member_id;
+    </select>
+    <select id="getDayExtensionReward" resultType="com.spark.bitrade.repository.entity.RankRewardTransaction">
+        SELECT IFNULL(m.username,m.mobile_phone) username, a.amount as minerProfit,a.member_id as memberId,2 rewardType from
+              (SELECT member_id,SUM(amount) as amount from member_transaction WHERE type in (47,48) and DATE(create_time) = #{dayTime} GROUP BY member_id ORDER BY SUM(amount) DESC limit 10) a
+        LEFT JOIN member m on m.id = a.member_id;
+    </select>
+    <select id="getTotalReward" resultType="com.spark.bitrade.repository.entity.RankRewardTransaction">
+        SELECT IFNULL(m.username,m.mobile_phone) username, a.amount as minerProfit,a.member_id as memberId,3 rewardType,now() createTime from
+              (SELECT member_id,SUM(money) as amount from bt_bank_miner_balance_transaction WHERE type in (4,7,9) GROUP BY member_id ORDER BY SUM(money) DESC limit 10) a
+        LEFT JOIN member m on m.id = a.member_id;
+    </select>
+    <select id="findOne" resultType="com.spark.bitrade.repository.entity.RankRewardTransaction">
+        SELECT * from rank_reward_transaction
+        WHERE member_id = #{memberId} and DATE(reward_time) = #{dayTime} and reward_type = #{rewardType}
+    </select>
+
+    <select id="getRankListByType" resultType="com.spark.bitrade.repository.entity.RankRewardTransaction">
+        SELECT * from rank_reward_transaction
+        WHERE  DATE_SUB(DATE(create_time),interval 1 day)  = DATE (#{createTime}) and reward_type = #{rewardType}  order by reward_level
+    </select>
+</mapper>

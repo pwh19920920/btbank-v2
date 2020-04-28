@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.TurntablePrizeMapper">
+
+    <resultMap id="TurntablePrizeResultMap" type="com.spark.bitrade.repository.entity.TurntablePrize">
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="actId" column="act_id" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="amount" column="amount" jdbcType="NUMERIC"/>
+        <result property="total" column="total" jdbcType="INTEGER"/>
+        <result property="stock" column="stock" jdbcType="INTEGER"/>
+        <result property="rate" column="rate" jdbcType="NUMERIC"/>
+        <result property="image" column="image" jdbcType="VARCHAR"/>
+        <result property="toplimit" column="toplimit" jdbcType="INTEGER"/>
+        <result property="priority" column="priority" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankMinerTotalMapper">
+
+    <select id="getPrincipal" resultType="com.spark.bitrade.repository.entity.BtBankMinerTotal">
+        <!-- 转入本金总额,次数,人数 -->
+        SELECT #{startTime} time, IFNULL(SUM(b.money),0) principal, count(b.money) count, count(DISTINCT b.member_id) people
+        FROM bt_bank_miner_balance_transaction b
+        WHERE
+        b.type = 1
+        and create_time >= #{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+    <select id="getReward" resultType="java.math.BigDecimal">
+        <!-- 结算佣金总额 -->
+        SELECT IFNULL(SUM(b.money),0) money FROM bt_bank_miner_balance_transaction b
+        WHERE
+        b.type IN (4, 7, 9)
+        and create_time >= #{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+    <select id="getDirectAndGoldRebate" resultType="java.util.Map">
+        <!-- 直推、金牌佣金 -->
+        select
+        IFNULL(SUM(case when rebate_type = 0 then rebate_amount else 0 end),0) directRebateAmount,
+        IFNULL(SUM(case when rebate_type = 1 then rebate_amount else 0 end),0) goldRebateAmount
+        from bt_bank_rebate_record
+        WHERE create_time >= #{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+    <select id="getSettle" resultType="java.math.BigDecimal">
+        <!-- 结算本金总额 -->
+
+        SELECT IFNULL(SUM(b.money),0) money FROM bt_bank_miner_balance_transaction b
+        WHERE
+         b.type IN (8, 2, 5)
+         and create_time >= #{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+</mapper>

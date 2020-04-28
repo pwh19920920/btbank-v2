@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankMinerOrderTotalMapper">
+
+    <select id="findList" parameterType="java.lang.String"
+            resultType="com.spark.bitrade.repository.entity.BtBankMinerOrderTotal">
+        select group_concat (DATE_FORMAT(b.create_time,'%Y-%m-%d')) as time,
+        IFNULL(o1.count,0) grabCount,IFNULL(o1.people,0) grabpeople,IFNULL(o1.sum,0)grabSum,
+        IFNULL(o2.count,0) sendCount,IFNULL(o2.people,0) sendPeople,IFNULL(o2.sum,0) sendSum,
+        IFNULL(b3.count,0) fixCount,IFNULL(b3.people,0) fixPeople,IFNULL(b3.sum,0) fixSum,
+        IFNULL(m.sum,0) sum,IFNULL(o.need_unlock_total_amount,0) needUnlockTotalAmount,
+        now() create_time,now() update_time
+        from
+        bt_bank_miner_balance_transaction b
+        left join
+        <!-- 抢单人数、次数、总额 -->
+        (select count(member_id) count, count(DISTINCT member_id) people,SUM(money) sum,create_time from bt_bank_miner_order_transaction where type = 1 GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')) o1
+                        on DATE_FORMAT(o1.create_time, '%Y-%m-%d') = DATE_FORMAT(b.create_time, '%Y-%m-%d')
+                left join
+        <!-- 派单人数、次数、总额-->
+        (select count(member_id) count, count(DISTINCT member_id) people,SUM(money) sum,create_time from bt_bank_miner_order_transaction where type = 2 GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')) o2
+                        on DATE_FORMAT(o2.create_time, '%Y-%m-%d') = DATE_FORMAT(b.create_time, '%Y-%m-%d')
+                left join
+        <!-- 固定收益人数、次数、总额-->
+        (select count(member_id) count, count(DISTINCT member_id) people,SUM(money) sum,create_time from bt_bank_miner_balance_transaction where type = 9 GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')) b3
+                        on DATE_FORMAT(b3.create_time, '%Y-%m-%d') = DATE_FORMAT(b.create_time, '%Y-%m-%d')
+                left join
+        <!-- 矿池总额-->
+        (select (sum(balance_amount) + sum(lock_amount) + sum(processing_reward_sum)) sum,update_time from bt_bank_miner_balance GROUP BY DATE_FORMAT(update_time, '%Y-%m-%d')) m
+                        on DATE_FORMAT(m.update_time, '%Y-%m-%d') = DATE_FORMAT(b.create_time, '%Y-%m-%d')
+                left join
+        <!-- 当日矿池总额-->
+        (select need_unlock_total_amount,report_date from bt_bank_miner_order_statistical_report)o
+                        on DATE_FORMAT(o.report_date, '%Y-%m-%d') = DATE_FORMAT(b.create_time, '%Y-%m-%d')
+                WHERE
+                        DATE_FORMAT(b.create_time,'%Y-%m-%d') <![CDATA[>=]]> #{startTime}
+                        and DATE_FORMAT(b.create_time,'%Y-%m-%d') <![CDATA[<=]]> #{endTime}
+                GROUP BY DATE_FORMAT(b.create_time, '%Y-%m-%d')
+    </select>
+
+
+    <select id="grabAndSendTotalList" resultType="com.spark.bitrade.repository.entity.BtBankMinerOrderTotal">
+        select
+        #{startTime} time,
+        sum(case when o.type=1 then o.count else 0 end) grabCount,
+        sum(case when o.type=1 then o.people else 0 end) grabpeople,
+        sum(case when o.type=1 then o.sum else 0 end) grabSum,
+        sum(case when o.type=2 then o.count else 0 end) sendCount,
+        sum(case when o.type=2 then o.people else 0 end) sendPeople,
+        sum(case when o.type=2 then o.sum else 0 end) sendSum
+         from
+        (
+            select type,DATE_FORMAT(create_time, '%Y-%m-%d') create_time,count(member_id) count, count(DISTINCT member_id) people,SUM(money) sum
+            from bt_bank_miner_order_transaction where type in(1,2)
+            and create_time <![CDATA[>=]]> #{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+            group by type,DATE_FORMAT(create_time, '%Y-%m-%d')
+        ) o
+
+
+
+    </select>
+
+
+    <select id="fixList" resultType="com.spark.bitrade.repository.entity.BtBankMinerOrderTotal">
+        <!-- 固定收益人数、次数、总额-->
+        select count(member_id) fixCount, count(DISTINCT member_id) fixPeople,SUM(money) fixSum ,create_time
+        from bt_bank_miner_balance_transaction
+        where type = 9
+        and create_time>=#{startTime} and create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')
+    </select>
+
+
+    <select id="mineTotalByDay" resultType="java.math.BigDecimal">
+        select need_unlock_total_amount
+        from bt_bank_miner_order_statistical_report
+        where report_date>= #{startTime} and report_date <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+
+</mapper>

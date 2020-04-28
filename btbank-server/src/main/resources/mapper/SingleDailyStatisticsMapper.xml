@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.SingleDailyStatisticsMapper">
+
+    <select id="buyOTCRank" resultType="com.spark.bitrade.repository.entity.SingleDailyStatistics">
+        select mt.member_id as memberId,
+        sum(mt.amount) as amount,
+        m.real_name as name,
+        m.mobile_phone as phoneNumber,
+        case when fm.member_type is null then m.member_level
+        when fm.member_type is not null then 3 end as memberType,
+        0 as transactionType,
+        NOW() as createTime,
+        NOW() as updateTime
+        from member_transaction mt
+        left join member m on mt.member_id = m.id
+        left join finc_member_account fm on fm.member_id = mt.member_id
+        where mt.type=4
+        and mt.create_time between #{startTime} and #{endTime}
+        GROUP BY mt.member_id
+        HAVING SUM(mt.amount) >= 10000
+    </select>
+
+    <select id="sellOTCRank" resultType="com.spark.bitrade.repository.entity.SingleDailyStatistics">
+        select mt.member_id as memberId,
+        sum(mt.amount) as amount,
+        m.real_name as name,
+        m.mobile_phone as phoneNumber,
+        case when fm.member_type is null then m.member_level
+        when fm.member_type is not null then 3 end as memberType,
+        1 as transactionType,
+        NOW() as createTime,
+        NOW() as updateTime
+        from member_transaction mt
+        left join member m on mt.member_id = m.id
+        left join finc_member_account fm on fm.member_id = mt.member_id
+        where mt.type=5
+        and mt.create_time between #{startTime} and #{endTime}
+        GROUP BY mt.member_id
+        having SUM(mt.amount) >= 10000
+    </select>
+
+    <select id="findPayFastReceiveRank" resultType="com.spark.bitrade.repository.entity.SingleDailyStatistics">
+        select
+            p.receipt_id memberId,m.mobile_phone phoneNumber,m.real_name name,
+            case when fm.member_id > 0 then 3 else m.member_level end as memberType,
+            2 as transactionType,
+            SUM(p.arrived_amount) amount,
+            now() as createTime,NOW() as updateTime
+        from pay_fast_record p
+        left join member m on m.id = p.receipt_id
+        left join finc_member_account fm on (fm.member_id =p.receipt_id and fm.member_type = 1)
+        where
+            p.unit = 'BT' and p.status = 1
+            and (p.`comment` is null or p.`comment` = '')
+            and p.update_time >= #{startTime} and p.update_time <![CDATA[<]]> #{endTime}
+        GROUP BY p.receipt_id
+        HAVING SUM(p.arrived_amount)>=10000
+
+    </select>
+
+    <select id="findPayFastPayRank" resultType="com.spark.bitrade.repository.entity.SingleDailyStatistics">
+        select
+            p.pay_id memberId,m.mobile_phone phoneNumber,m.real_name name,
+            case when fm.member_id > 0 then 3 else m.member_level end as memberType,
+            3 as transactionType,
+            SUM(p.amount) amount,
+            now() as createTime,NOW() as updateTime
+        from pay_fast_record p
+        left join member m on m.id = p.pay_id
+        left join finc_member_account fm on (fm.member_id =p.pay_id and fm.member_type = 1)
+        where
+            p.unit = 'BT' and p.status = 1
+            and (p.`comment` is null or p.`comment` = '')
+            and p.update_time >= #{startTime} and p.update_time <![CDATA[<]]> #{endTime}
+        GROUP BY p.pay_id
+        HAVING SUM(p.amount)>=10000
+
+    </select>
+</mapper>

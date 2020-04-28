@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.OtcLimitOperationsMapper">
+
+    <resultMap id="OtcLimitDTOMap" type="com.spark.bitrade.api.dto.OtcLimitDTO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="order_sn" property="orderSn" jdbcType="VARCHAR"/>
+        <result column="member_id" property="memberId" jdbcType="BIGINT"/>
+        <result column="coin_id" property="coinId" jdbcType="INTEGER"/>
+        <result column="number" property="number" jdbcType="DECIMAL"/>
+        <result column="limit_time" property="limitTime" jdbcType="TIMESTAMP"/>
+        <result column="state" property="state" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="OtcLimitAppealDTOMap" type="com.spark.bitrade.api.dto.OtcLimitAppealDTO">
+        <result column="order_id" property="orderId" jdbcType="BIGINT"/>
+        <result column="initiator_id" property="initiatorId" jdbcType="BIGINT"/>
+        <result column="associate_id" property="associateId" jdbcType="BIGINT"/>
+        <result column="is_success" property="isSuccess" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="findOtcLimitOrder" resultMap="OtcLimitDTOMap">
+        select
+          id,
+          order_sn,
+          member_id,
+          coin_id,
+          number,
+          limit_time,
+          state
+        from
+          (select
+            o.`id`,
+            o.`order_sn`,
+            o.`customer_id` AS member_id,
+            o.`coin_id`,
+            o.`number`,
+            o.`release_time` as limit_time,
+            o.`status` as state
+          from
+            otc_order o
+          where o.`status` in (3, 5)
+            and o.`is_one_key` = 1
+            and o.`advertise_type` = 1) a
+        where a.limit_time &gt;= #{date} and a.member_id = #{memberId}
+    </select>
+
+    <select id="findLimitAppealByOrderIds" resultMap="OtcLimitAppealDTOMap">
+        select
+        a.`order_id`,
+        a.`initiator_id`,
+        a.`associate_id`,
+        a.`is_success`
+        from
+        appeal a where a.`order_id` in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

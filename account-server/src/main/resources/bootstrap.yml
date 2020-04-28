@@ -1,0 +1,22 @@
+server:
+  port: 6028
+  context-path: /acct
+
+spring:
+  application:
+    name: SERVICE-ACCOUNT
+  cloud:
+    nacos:
+      config:
+        shared-dataids: application-v2.${spring.cloud.nacos.config.file-extension}
+        file-extension: yml
+        server-addr: ${nacos.host:nacos.btbank.local}:${nacos.port:8848}
+      discovery:
+        server-addr: ${nacos.host:nacos.btbank.local}:${nacos.port:8848}
+    service-registry:
+      auto-registration:
+        enabled: true
+
+jasypt:
+  encryptor:
+    password: tP7tFW0qH092eUgkgmRSwxpsgMdNLkjg1bkLtzvYcaIa8VSmJULh6IyO1DC9czGj7lKILD7oXivyDAGQPxrsrjCvMCX/POF9DZ8M2Jo+ZOOwKp16LKdhgQ==

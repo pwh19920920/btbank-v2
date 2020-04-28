@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.EnterpriseMinerTotalMapper">
+
+    <select id="getInto" resultType="com.spark.bitrade.repository.entity.EnterpriseMinerTotal">
+        <!-- 转入次数、人数、总额 -->
+        select count(id) intoCount,count(DISTINCT member_id) intoPeople,ifnull(SUM(e.amount),0) intoSum
+        from enterprise_miner_transaction e
+        where type = 1 and e.status = 1
+        and e.create_time >= #{startTime} and e.create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+    <select id="getSendAndMineAndReward" resultType="com.spark.bitrade.repository.entity.EnterpriseMinerTotal">
+        <!-- 转出、挖矿、佣金 -->
+        select
+        ifnull(-SUM(case when e.type = 2 then e.amount else 0 end),0) sendSum,
+        ifnull(-SUM(case when e.type = 3 then e.amount else 0 end),0) mineSum,
+        ifnull(SUM(case when e.type = 4 then e.reward else 0 end),0) rewardSum
+        from enterprise_miner_transaction e
+        where type in (2,3,4) and e.status = 1
+        and e.create_time >= #{startTime} and e.create_time <![CDATA[<]]> DATE_FORMAT(DATE_ADD(#{startTime} ,INTERVAL 1 day),'%Y-%m-%d')
+    </select>
+
+</mapper>

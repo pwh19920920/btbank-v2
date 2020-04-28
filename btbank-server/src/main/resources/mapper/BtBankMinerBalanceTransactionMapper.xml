@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankMinerBalanceTransactionMapper">
+    <resultMap id="BaseResultMap" type="com.spark.bitrade.repository.entity.BtBankMinerBalanceTransaction">
+        <!--@mbg.generated-->
+        <!--@Table bt_bank_miner_balance_transaction-->
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="member_id" jdbcType="BIGINT" property="memberId"/>
+        <result column="type" jdbcType="TINYINT" property="type"/>
+        <result column="money" jdbcType="DECIMAL" property="money"/>
+        <result column="balance" jdbcType="DECIMAL" property="balance"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="order_transaction_id" jdbcType="BIGINT" property="orderTransactionId"/>
+        <result column="ref_id" jdbcType="BIGINT" property="refId"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="is_rebate_processed" jdbcType="BOOLEAN" property="isRebateProcessed"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id, member_id, `type`, money, balance, create_time, order_transaction_id, ref_id,
+        remark, is_rebate_processed
+    </sql>
+    <select id="getYestodayMinerBalanceTransactionsSumByMemberId" resultType="java.math.BigDecimal">
+        select
+        SUM(money) from
+        bt_bank_miner_balance_transaction where member_id=#{memberId}
+
+
+        <if test="types!=null and types.size&gt;0">
+            and `type` in
+            <foreach close=")" collection="types" index="index" item="item" open="(" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        and DATE_SUB(curdate(),INTERVAL 1 DAY)=DATE(create_time)
+
+    </select>
+    <select id="listNeedRebate" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from bt_bank_miner_balance_transaction
+        <!--  类型：
+        1  转入，2 抢单本金转出，3 抢单佣金转入，4 抢单佣金转出，5 派单本金转出，6 派单佣金转入，7 派单佣金转出，8 转出，9 固定佣金转出，10 固定佣金转入，11 抢单锁仓，12 派单锁仓
+        -->
+        where is_rebate_processed=0 and type in (4,7,9)
+        order by create_time
+    </select>
+    <update id="markRebateProcessedById">
+        update bt_bank_miner_balance_transaction
+        set is_rebate_processed=1
+        where id=#{id}
+    </update>
+
+
+    <select id="countProfitByType" resultType="com.spark.bitrade.repository.entity.BtBankMinerBalanceTransaction">
+        SELECT sum(money) sumMoney, member_id
+            FROM bt_bank_miner_balance_transaction
+            WHERE (type = 4 or type = 7 or type = 9)
+            and create_time <![CDATA[>=]]> #{limitTime}
+            GROUP BY member_id
+    </select>
+
+
+</mapper>

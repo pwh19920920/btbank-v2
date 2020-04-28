@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.SingleDealStatisticsMapper">
+
+    <select id="statisticsOtcSell" resultType="com.spark.bitrade.repository.entity.SingleDealStatistics">
+        select
+        IFNULL(sum(amount),0) as currentSellTotal,
+        0 as `type`,
+        NOW() as createTime,
+        NOW() as updateTime
+        from member_transaction
+        where type = 5 and symbol = 'BT'
+        and create_time BETWEEN #{startTime} and #{endTime}
+    </select>
+
+    <select id="statisticsOtcBuy" resultType="com.spark.bitrade.repository.entity.SingleDealStatistics">
+        select
+        IFNULL(sum(amount),0) as currentBuyTotal,
+        0 as `type`,
+        NOW() as createTime,
+        NOW() as updateTime
+        from member_transaction
+        where type = 4 and symbol = 'BT'
+        and create_time BETWEEN #{startTime} and #{endTime}
+    </select>
+
+</mapper>

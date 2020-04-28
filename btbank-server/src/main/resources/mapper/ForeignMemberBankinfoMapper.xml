@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.ForeignMemberBankinfoMapper">
+
+    <resultMap type="com.spark.bitrade.repository.entity.ForeignMemberBankinfo" id="ForeignMemberBankinfoMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="memberId" column="member_id" jdbcType="INTEGER"/>
+        <result property="accountName" column="account_name" jdbcType="VARCHAR"/>
+        <result property="bankName" column="bank_name" jdbcType="VARCHAR"/>
+        <result property="swiftCode" column="swift_code" jdbcType="VARCHAR"/>
+        <result property="accountNumber" column="account_number" jdbcType="VARCHAR"/>
+        <result property="bankAddress" column="bank_address" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="ForeignMemberBankinfoMap">
+        select
+          id, member_id, account_name, bank_name, swift_code, account_number, bank_address, create_time, update_time
+        from otc_sync.foreign_member_bankinfo
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="ForeignMemberBankinfoMap">
+        select
+          id, member_id, account_name, bank_name, swift_code, account_number, bank_address, create_time, update_time
+        from otc_sync.foreign_member_bankinfo
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="ForeignMemberBankinfoMap">
+        select
+          id, member_id, account_name, bank_name, swift_code, account_number, bank_address, create_time, update_time
+        from otc_sync.foreign_member_bankinfo
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="memberId != null">
+                and member_id = #{memberId}
+            </if>
+            <if test="accountName != null and accountName != ''">
+                and account_name = #{accountName}
+            </if>
+            <if test="bankName != null and bankName != ''">
+                and bank_name = #{bankName}
+            </if>
+            <if test="swiftCode != null and swiftCode != ''">
+                and swift_code = #{swiftCode}
+            </if>
+            <if test="accountNumber != null and accountNumber != ''">
+                and account_number = #{accountNumber}
+            </if>
+            <if test="bankAddress != null and bankAddress != ''">
+                and bank_address = #{bankAddress}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into otc_sync.foreign_member_bankinfo(id,member_id, account_name, bank_name, swift_code, account_number, bank_address, create_time, update_time)
+        values (#{id},#{memberId}, #{accountName}, #{bankName}, #{swiftCode}, #{accountNumber}, #{bankAddress}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update otc_sync.foreign_member_bankinfo
+        <set>
+            <if test="memberId != null">
+                member_id = #{memberId},
+            </if>
+            <if test="accountName != null and accountName != ''">
+                account_name = #{accountName},
+            </if>
+            <if test="bankName != null and bankName != ''">
+                bank_name = #{bankName},
+            </if>
+            <if test="swiftCode != null and swiftCode != ''">
+                swift_code = #{swiftCode},
+            </if>
+            <if test="accountNumber != null and accountNumber != ''">
+                account_number = #{accountNumber},
+            </if>
+            <if test="bankAddress != null and bankAddress != ''">
+                bank_address = #{bankAddress},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from otc_sync.foreign_member_bankinfo where id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.ImMemberMapper">
+
+
+    <select id="getUnRegistImMiner" resultType="com.spark.bitrade.repository.entity.MemberVo">
+          SELECT member.id AS member_id, member.avatar, member.real_name, member.email, member.username
+          FROM member member,
+          ( SELECT member_id, count(member_id) as cnt FROM bt_bank_miner_balance_transaction WHERE type = 1 AND member_id NOT IN ( SELECT member_id FROM im_member ) GROUP BY member_id ) A
+          WHERE member.id = A.member_id AND A.cnt &gt; 0
+    </select>
+    <select id="getUnJoinGoroupUser" resultType="com.spark.bitrade.repository.entity.ImMember">
+          select * from im_member where member_id  NOT IN ( SELECT member_id from im_group_member)
+    </select>
+    <select id="getUnJoinChatRoomUser" resultType="com.spark.bitrade.repository.entity.ImMember">
+          select * from im_member where  member_id NOT IN (SELECT member_id from im_chat_room_member )
+    </select>
+    <select id="getUnRegistImkfMiner" parameterType="list"  resultType="com.spark.bitrade.repository.entity.MemberVo">
+        SELECT member.id AS member_id, member.avatar, member.real_name, member.email, member.username
+        FROM member member  where member.email like  'btkf%'   and  member.id  NOT IN
+        <foreach item="item" collection="list" separator="," open="(" close=")" index="">
+            #{item.memberId}
+        </foreach>
+    </select>
+    <select id="getUnRegistImkfallMiner" parameterType="list"  resultType="com.spark.bitrade.repository.entity.MemberVo">
+        SELECT member.id AS member_id, member.avatar, member.real_name, member.email, member.username
+        FROM member member  where member.email like  'btkf%'
+    </select>
+</mapper>

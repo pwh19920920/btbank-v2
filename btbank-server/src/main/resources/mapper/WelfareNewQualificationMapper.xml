@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.WelfareNewQualificationMapper">
+
+    <select id="getExistIds" resultType="string">
+        select id from welfare_new_qualification
+    </select>
+
+    <select id="getNewInvolvement" resultType="com.spark.bitrade.repository.entity.WelfareNewQualification">
+        SELECT
+            concat( w.invite_id, ':', w.member_id ) id,
+            m.real_name real_name,
+            m.mobile_phone mobile_phone,
+            w.invite_id member_id,
+            w.member_id sub_id,
+            w.create_time
+        FROM
+            welfare_involvement w
+            LEFT JOIN member m ON w.invite_id = m.id
+        WHERE
+            w.act_type = 0
+            AND w.`status` = 0
+            AND w.`create_time` &gt;= #{opening}
+            AND w.`create_time` &lt;= #{closing}
+        ORDER BY
+            w.create_time ASC
+    </select>
+</mapper>

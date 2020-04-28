@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.mapper.MemberWalletMapper">
+
+
+    <!--加减钱包余额-->
+    <update id="trade">
+        update member_wallet
+        set
+            balance=balance + #{tradeBalance},
+            frozen_balance = frozen_balance + #{tradeFrozenBalance},
+            lock_balance = lock_balance + #{tradeLockBalance}
+        where
+            id = #{walletId}
+            and balance + #{tradeBalance} >= 0
+            and frozen_balance + #{tradeFrozenBalance} >= 0
+            and lock_balance + #{tradeLockBalance} >=0
+    </update>
+
+    <update id="tradeAllowNegative">
+        update member_wallet
+        set
+            balance=balance + #{tradeBalance},
+            frozen_balance = frozen_balance + #{tradeFrozenBalance},
+            lock_balance = lock_balance + #{tradeLockBalance}
+        where
+            id = #{walletId}
+            and frozen_balance + #{tradeFrozenBalance} >= 0
+            and lock_balance + #{tradeLockBalance} >=0
+    </update>
+
+    <update id="trade2">
+        update member_wallet
+        set
+            balance=balance + #{tradeBalance},
+            frozen_balance = frozen_balance + #{tradeFrozenBalance},
+            lock_balance = lock_balance + #{tradeLockBalance}
+        where
+            id = #{walletId}
+            and balance >= #{minimum}
+            and frozen_balance + #{tradeFrozenBalance} >= 0
+            and lock_balance + #{tradeLockBalance} >=0
+    </update>
+
+</mapper>

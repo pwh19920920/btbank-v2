@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankGeneralStatementMapper">
+
+    <!--<select id="selectTotal" resultType="com.spark.bitrade.repository.entity.BtBankGeneralStatement">-->
+
+    <!--select *,-->
+    <!--Date(#{startTime}) time,-->
+    <!--miner_balance+hqb_balance+member_waller_balance+oct_frozen_balance+need_unlock_total_amount as total_assets-->
+    <!--from (-->
+    <!--(select count(id) member_reg_total from member where registration_time &lt;=#{endTime}) member_reg_total,-->
+    <!--(select count(DISTINCT member_id) miner_total from bt_bank_miner_balance_transaction where type = 1 and create_time &lt;=#{endTime}) miner_total,-->
+    <!--(select count(id) member_reg_today from bt_bank_miner_balance WHERE create_time &lt;=#{endTime} and create_time &gt;=#{startTime}) member_reg_today,-->
+    <!--(SELECT count(*) as business_total from member WHERE member_level = 2-->
+    <!--and certified_business_status = 2 and registration_time &lt;=#{endTime}) business_total,-->
+    <!--(select SUM(a.id) as business_new_today from (-->
+    <!--select count(id) as id from sys_olog where action_name = '一键成为商家' and action = 'becomeBusinesser' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}-->
+    <!--union-->
+    <!--SELECT SUM(b.id) as id from (select count(id) as id from business_auth_apply WHERE certified_business_status = 2 and update_time &lt;=#{endTime} and update_time &gt;=#{startTime}  GROUP BY member_id ORDER BY update_time DESC) b) a) business_new_today,-->
+
+    <!--(SELECT IFNULL(SUM(amount),0) as miner_balance from member_transaction WHERE create_time &lt;=#{endTime} and create_time &gt;=#{startTime} and symbol='BT' AND type=22 AND member_id!=401136 and `comment` is NOT NULL) miner_balance,-->
+    <!--(select IFNULL((SUM(plan_in_amount_total) + SUM(lock_amount_total)),0) as hqb_balance from lock_hqb_member_wallet_total WHERE coin_symbol = 'BT' and date =date(#{startTime})) as hqb_balance,-->
+    <!--(SELECT SUM(b.after_balance) as member_waller_balance-->
+    <!--FROM-->
+    <!--(SELECT a.after_balance FROM-->
+    <!--(select * FROM member_wallet_history where coin_id='BT' and op_time  &lt;=#{endTime} and op_time  &gt;=#{startTime} ORDER BY op_time DESC) a-->
+    <!--GROUP BY a.member_id) b) member_waller_balance,-->
+
+    <!--(SELECT IFNULL(SUM(total_amount),0) lock_balance from lock_coin_detail where `status` = 0 and coin_unit='BT' and lock_time &lt;=#{endTime} and lock_time &gt;=#{startTime}) lock_balance,-->
+
+    <!--(SELECT SUM(b.after_frozen_balance) as oct_frozen_balance-->
+    <!--FROM-->
+    <!--(SELECT a.after_frozen_balance FROM-->
+    <!--(select * FROM member_wallet_history where coin_id='BT' and op_time &lt;=#{endTime} and op_time &gt;=#{startTime} ORDER BY op_time DESC) a-->
+    <!--GROUP BY a.member_id) b) oct_frozen_balance,-->
+
+    <!--(select sum(balance_amount+lock_amount ) as miner_balance_total FROM bt_bank_miner_balance) as miner_balance_total,-->
+
+    <!--(select IFNULL(SUM(need_unlock_total_amount),0) as need_unlock_total_amount from bt_bank_miner_order_total WHERE time &lt;=#{endTime} and time &gt;=#{startTime} limit 1) need_unlock_total_amount,-->
+
+    <!--(SELECT IFNULL(SUM(a.miner_got_reward_sum),0) as miner_got_reward_sum  FROM-->
+    <!--(select IFNULL(sum(money),0) miner_got_reward_sum from bt_bank_miner_balance_transaction where  type in (4,7,9) and create_time &lt;=#{endTime}-->
+    <!--UNION-->
+    <!--select IFNULL(sum(amount),0) miner_got_reward_sum from member_transaction WHERE type in (47,48) and create_time &lt;=#{endTime} ) a) miner_got_reward_sum,-->
+
+    <!--(SELECT IFNULL(SUM(a.miner_reward_sum_today),0) as miner_reward_sum_today  FROM-->
+    <!--(select IFNULL(sum(money),0) miner_reward_sum_today from bt_bank_miner_balance_transaction where  type in (4,7,9) and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}-->
+    <!--UNION-->
+    <!--select IFNULL(sum(amount),0) miner_reward_sum_today from member_transaction WHERE type in (47,48) and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}) a) miner_reward_sum_today,-->
+    <!--(select IFNULL(sum(money),0) otc_sale_num from otc_order where advertise_type=1 and release_time &lt;=#{endTime} and release_time &gt;=#{startTime}) otc_sale_num,-->
+    <!--(select IFNULL(sum(money),0) otc_buy_num from otc_order where advertise_type=0 and release_time &lt;=#{endTime} and release_time &gt;=#{startTime}) otc_buy_num,-->
+    <!--(select IFNULL(sum(amount),0) charge_num from member_transaction where  type=0 and symbol='BT' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime} ) charge_num,-->
+    <!--(select IFNULL(sum(amount),0) withdraw_num from member_transaction where type=1 and symbol='BT' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime} ) withdraw_num-->
+    <!--)-->
+    <!--</select>-->
+
+
+    <select id="selectTotal" resultType="com.spark.bitrade.repository.entity.BtBankGeneralStatement">
+        select *,
+        Date(#{startTime}) time,
+        zhengzhi_balance+hqb_balance+member_waller_balance+oct_frozen_balance+need_unlock_total_amount as total_assets
+        from (
+        (select count(id) member_reg_total from member where registration_time &lt;=#{endTime}) member_reg_total,
+        (
+        SELECT
+        count(DISTINCT member_id) miner_total
+        FROM
+        bt_bank_miner_balance_transaction
+        WHERE
+        type = 1
+        AND create_time &lt;=#{endTime}
+        ) miner_total,
+
+        (select count(id) member_reg_today from bt_bank_miner_balance WHERE create_time &lt;=#{endTime} and create_time &gt;=#{startTime}) member_reg_today,
+        (SELECT count(*) as business_total from member WHERE member_level = 2
+        and certified_business_status = 2 and certified_business_check_time &lt;=#{endTime}) business_total,
+        (select SUM(a.id) as business_new_today from (
+        select count(id) as id from sys_olog where action_name = '一键成为商家' and action = 'becomeBusinesser' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}
+        union
+        SELECT COUNT(b.id) as id from (select a.* from ((SELECT * from business_auth_apply WHERE certified_business_status = 2 and update_time &lt;=#{endTime} and update_time &gt;=#{startTime} ORDER BY update_time DESC) a) GROUP BY a.member_id ) b) a) business_new_today,
+
+        (SELECT IFNULL(SUM(amount),0) as miner_balance from member_transaction WHERE create_time &lt;=#{endTime} and create_time &gt;=#{startTime} and symbol='BT' AND type=22 AND member_id!=401136 and `comment` is NOT NULL) miner_balance,
+        (SELECT IFNULL(((SELECT ABS(SUM(amount)) as zhengzhi_balance from member_transaction WHERE create_time &lt;=#{endTime} and  symbol='BT' AND type=22 AND member_id!=401136 and `comment` is NULL)
+        -
+        (SELECT SUM(amount) as zhengzhi_balance from member_transaction WHERE create_time &lt;=#{endTime}  and  symbol='BT' AND type=22 AND member_id!=401136 and `comment` is NOT NULL and `comment`='BT锁仓活动（用户锁仓本金）解锁')),0) as zhengzhi_balance) zhengzhi_balance,
+        (select IFNULL((SUM(plan_in_amount_total) + SUM(lock_amount_total)),0) as hqb_balance from lock_hqb_member_wallet_total WHERE coin_symbol = 'BT' and date =date(#{startTime})) as hqb_balance,
+        (SELECT SUM(b.after_balance) as member_waller_balance
+        FROM
+        (SELECT a.after_balance FROM
+        (select * FROM member_wallet_history where coin_id='BT' and op_time  &lt;=#{endTime} and op_time  &gt;=#{startTime} ORDER BY op_time DESC) a
+        GROUP BY a.member_id) b) member_waller_balance,
+        (SELECT SUM(lock_amount) as red_balance from red_pack_lock WHERE create_time &lt;=#{endTime} and create_time  &gt;=#{startTime}) red_balance,
+
+        (
+        <!-- SELECT IFNULL(SUM(total_amount),0) lock_balance from lock_coin_detail where `status` = 0 and coin_unit='BT' and lock_time &lt;=#{endTime} and lock_time &gt;=#{startTime}-->
+        SELECT sum(total_amount) lockBalance FROM lock_coin_detail
+            where (ISNULL(unlock_time) or unlock_time >= #{endTime}) and lock_time <![CDATA[<]]> #{startTime} and coin_unit = 'BT'
+        ) lockBalance,
+
+        (SELECT SUM(b.after_frozen_balance) as oct_frozen_balance
+        FROM
+        (SELECT a.after_frozen_balance FROM
+        (select * FROM member_wallet_history where coin_id='BT' and op_time &lt;=#{endTime} and op_time &gt;=#{startTime} ORDER BY op_time DESC) a
+        GROUP BY a.member_id) b) oct_frozen_balance,
+
+        (select sum(balance_amount+lock_amount ) as miner_balance_total FROM bt_bank_miner_balance) as miner_balance_total,
+
+        (SELECT SUM(a.need_unlock_total_amount) as need_unlock_total_amount FROM
+        ((select IFNULL(SUM(need_unlock_total_amount),0) as need_unlock_total_amount from bt_bank_miner_order_total WHERE time &lt;=#{endTime} and time &gt;=#{startTime} limit 1)
+        UNION
+        (SELECT IFNULL(SUM(money),0) as need_unlock_total_amount FROM bt_bank_miner_balance_transaction WHERE type in (3,6) and create_time &lt;=#{endTime})) a) need_unlock_total_amount,
+
+        (SELECT IFNULL(SUM(a.miner_got_reward_sum),0) as miner_got_reward_sum  FROM
+        (select IFNULL(sum(money),0) miner_got_reward_sum from bt_bank_miner_balance_transaction where  type in (4,7,9) and create_time &lt;=#{endTime}
+        UNION
+        select IFNULL(sum(amount),0) miner_got_reward_sum from member_transaction WHERE type in (47,48) and create_time &lt;=#{endTime} ) a) miner_got_reward_sum,
+
+        (SELECT IFNULL(SUM(a.miner_reward_sum_today),0) as miner_reward_sum_today  FROM
+        (select IFNULL(sum(money),0) miner_reward_sum_today from bt_bank_miner_balance_transaction where  type in (4,7,9) and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}
+        UNION
+        select IFNULL(sum(amount),0) miner_reward_sum_today from member_transaction WHERE type in (47,48) and create_time &lt;=#{endTime} and create_time &gt;=#{startTime}) a) miner_reward_sum_today,
+        (select IFNULL(sum(money),0) otc_sale_num from otc_order where advertise_type=1 and release_time &lt;=#{endTime} and release_time &gt;=#{startTime}) otc_sale_num,
+        (select IFNULL(sum(money),0) otc_buy_num from otc_order where advertise_type=0 and release_time &lt;=#{endTime} and release_time &gt;=#{startTime}) otc_buy_num,
+        (select IFNULL(sum(amount),0) charge_num from member_transaction where  type=0 and symbol='BT' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime} ) charge_num,
+        (select IFNULL(sum(amount),0) withdraw_num from member_transaction where type=1 and symbol='BT' and create_time &lt;=#{endTime} and create_time &gt;=#{startTime} ) withdraw_num
+        )
+    </select>
+
+    <select id="selectNew" resultType="com.spark.bitrade.repository.entity.BtBankGeneralStatement">
+        select * from bt_bank_general_statement order by time desc limit 1
+    </select>
+
+
+</mapper>

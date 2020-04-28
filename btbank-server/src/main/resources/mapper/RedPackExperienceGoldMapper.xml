@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.RedPackExperienceGoldMapper">
+
+
+    <insert id="saveGetId" parameterType="com.spark.bitrade.repository.entity.RedPackExperienceGold" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO red_pack_experience_gold (
+        `member_id`, `activity_type`, `lock_type`,
+        `amount`, `create_time`, `update_time`, `child_member_id`,
+        `mine_pool_id`, `mining_id`)
+        VALUES
+        (#{redPackExperienceGold.memberId},
+        #{redPackExperienceGold.activityType}, #{redPackExperienceGold.lockType},
+        #{redPackExperienceGold.amount}, #{redPackExperienceGold.createTime}, #{redPackExperienceGold.updateTime},
+        #{redPackExperienceGold.childMemberId}, #{redPackExperienceGold.minePoolId},#{redPackExperienceGold.miningId})
+    </insert>
+</mapper>

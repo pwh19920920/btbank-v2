@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankMinerOrderStatisticalReportMapper">
+    <resultMap id="BaseResultMap" type="com.spark.bitrade.repository.entity.BtBankMinerOrderStatisticalReport">
+        <!--@mbg.generated-->
+        <!--@Table bt_bank_miner_order_statistical_report-->
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="report_date" jdbcType="TIMESTAMP" property="reportDate"/>
+        <result column="grab_member_num" jdbcType="INTEGER" property="grabMemberNum"/>
+        <result column="grab_times" jdbcType="INTEGER" property="grabTimes"/>
+        <result column="grab_total_amount" jdbcType="DECIMAL" property="grabTotalAmount"/>
+        <result column="dispatch_member_num" jdbcType="INTEGER" property="dispatchMemberNum"/>
+        <result column="dispatch_times" jdbcType="INTEGER" property="dispatchTimes"/>
+        <result column="dispatch_total_amount" jdbcType="DECIMAL" property="dispatchTotalAmount"/>
+        <result column="fixed_member_num" jdbcType="INTEGER" property="fixedMemberNum"/>
+        <result column="fixed_times" jdbcType="INTEGER" property="fixedTimes"/>
+        <result column="fixed_totoal_amount" jdbcType="INTEGER" property="fixedTotoalAmount"/>
+        <result column="miner_pool_totoal_amount" jdbcType="DECIMAL" property="minerPoolTotoalAmount"/>
+        <result column="need_unlock_total_amount" jdbcType="DECIMAL" property="needUnlockTotalAmount"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id, report_date, grab_member_num, grab_times, grab_total_amount, dispatch_member_num,
+        dispatch_times, dispatch_total_amount, fixed_member_num, fixed_times, fixed_totoal_amount,
+        miner_pool_totoal_amount, need_unlock_total_amount, create_time, update_time
+    </sql>
+    <select id="getOrderReportFromBalanceTransaction"
+            resultType="com.spark.bitrade.repository.entity.BtBankMinerOrderStatisticalReport">
+
+        select (yestoday_need_unlock_total_amount + charge - grabed_and_dispatched) as need_unlock_total_amount from(
+
+				(select IFNULL(sum(need_unlock_total_amount),0) yestoday_need_unlock_total_amount from bt_bank_miner_order_statistical_report where report_date= DATE_ADD(DATE(#{date}),INTERVAL -1 DAY) ) yestoday_need_unlock_total_amount,
+        (select IFNULL(sum(money),0) charge from bt_bank_miner_balance_transaction where type=1 and date(create_time)=#{date}) charge,
+				(select IFNULL(sum(money),0) grabed_and_dispatched from bt_bank_miner_balance_transaction where type in (2,5,8) and date(create_time)=#{date}) grabed_and_dispatched
+
+        )
+    </select>
+</mapper>

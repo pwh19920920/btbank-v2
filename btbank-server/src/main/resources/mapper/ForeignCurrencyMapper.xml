@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.ForeignCurrencyMapper">
+
+
+    <select id="getAvailCurrency"    resultType="java.lang.String">
+        select CONCAT('CNH',currency)      from foreign_currency where status = 1  and currency in ('EUR','USD','JPY','CHF','AUD','CAD','NZD','GBP','SEK','NOK','MXN','TRY','ZAR','CNH','XAU','XAG','SGD','RUB','HKD','DKK','PLN','BTC','ETH','LTC','XRP','DSH','BCH')
+    </select>
+    <select id="getAvail"    resultType="com.spark.bitrade.repository.entity.ForeignCurrency">
+        select *    from foreign_currency where status = 1  and currency in ('EUR','USD','JPY','CHF','AUD','CAD','NZD','GBP','SEK','NOK','MXN','TRY','ZAR','CNH','XAU','XAG','SGD','RUB','HKD','DKK','PLN','BTC','ETH','LTC','XRP','DSH','BCH')
+    </select>
+    <select id="getByEnName"    resultType="com.spark.bitrade.repository.entity.ForeignCurrency"  parameterType="java.lang.String">
+        select *    from foreign_currency where status = 1  and currency  =  #{currency}  limit 1
+    </select>
+    <select id="getOtherAvailCurrency"    resultType="java.lang.String">
+        select  currency     from foreign_currency where status = 1  and currency in ('IDR','THB','PHP','MYR','INR','AED','SAR','BRL','MOP','KRW','TWD')
+    </select>
+    <select id="getOtherAvail"    resultType="com.spark.bitrade.repository.entity.ForeignCurrency">
+        select *    from foreign_currency where status = 1  and currency in  ('IDR','THB','PHP','MYR','INR','AED','SAR','BRL','MOP','KRW','TWD')
+    </select>
+</mapper>

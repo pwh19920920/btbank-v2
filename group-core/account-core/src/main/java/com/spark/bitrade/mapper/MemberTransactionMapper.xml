@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.mapper.MemberTransactionMapper">
+
+
+    <select id="selectProfitCount" resultType="java.lang.Double">
+        SELECT sum(reward_amount) profit FROM business_miner_order
+          WHERE buy_id = #{memberId}
+          and update_time BETWEEN #{startTime} and #{endTime} and status in (3,5);
+    </select>
+    <select id="profitList" resultType="com.spark.bitrade.entity.MemberTransaction">
+        SELECT reward_amount as amount ,update_time as createTime,ref_id as refId
+        from business_miner_order
+        WHERE buy_id = #{memberId}
+          and update_time BETWEEN #{startTime} and #{endTime} and status in (3,5)
+    </select>
+</mapper>

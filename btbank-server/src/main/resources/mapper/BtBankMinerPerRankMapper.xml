@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.BtBankMinerPerRankMapper">
+
+    <select id="getSub" parameterType="java.lang.Long"
+            resultType="com.spark.bitrade.repository.entity.BtBankMinerPerRank">
+        SELECT
+            count(DISTINCT m.id) as recommended,DATE_FORMAT(NOW(),'%Y-%m-%d ') time,now() createTime
+        FROM
+            `bt_bank_miner_balance_transaction` tx
+            LEFT JOIN member m ON m.id = tx.`member_id`
+        WHERE
+            m.`inviter_id` =#{minerId}
+        AND tx.`type` =1
+        </select>
+
+        <select id="getSubId" resultType="java.lang.Long">
+            SELECT m.id
+            FROM
+                `bt_bank_miner_balance_transaction` tx
+                LEFT JOIN member m ON m.id = tx.`member_id`
+            WHERE
+                m.`inviter_id` = #{memberId}
+             AND tx.`type` =1
+             GROUP BY m.id
+
+        </select>
+
+        <select id="getOnesPer" resultType="java.math.BigDecimal">
+            select
+            (sum(IFNULL(mw.balance,0)) + sum(IFNULL(bmb.balance_amount,0)) + sum(IFNULL(bmb.lock_amount,0))
+             + sum(IFNULL(bmb.processing_reward_sum,0)) + sum(IFNULL(bfb.balance_amount,0))
+            ) as money
+            from member_wallet mw
+            left join bt_bank_miner_balance bmb on bmb.member_id = mw.member_id
+            left join bt_bank_financial_balance bfb on bfb.member_id = mw.member_id
+            where
+            mw.member_id in
+            <foreach collection="members" open="(" separator="," close=")" item="i">
+                #{i}
+            </foreach>
+             and mw.coin_id = 'BT'
+        </select>
+
+    </mapper>

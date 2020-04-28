@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.FinancialActivityJoinDetailsMapper">
+
+
+
+    <select id="getJoinActivitiesProfit" parameterType="com.spark.bitrade.api.vo.FinancialActivityJoinDetailsVo" resultType="java.math.BigDecimal" >
+        SELECT SUM(release_profit_amount) from financial_activity_join_details
+        <where>
+            unit = 'BT'
+            <if test="memberId!=null and memberId!=''">
+                AND member_id = #{memberId}
+            </if>
+            <if test="startTime!=null ">
+                AND #{startTime}  <![CDATA[<=]]> release_time
+            </if>
+            <if test="endTime!=null">
+                AND release_time <![CDATA[<=]]> #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="getJoinActivitiesDetail" parameterType="com.spark.bitrade.api.vo.FinancialActivityJoinDetailsVo"  resultType="com.spark.bitrade.api.vo.FinancialActivityJoinDetailsVo"  >
+        SELECT fd.id, fd.activity_id,fd.name,fd.start_time,fd.finalize_time,fd.release_time,fd.type,fd.member_id,fd.member_name,fd.unit,fd.purchase_nums,fd.amount,fd.release_profit_time,fd.release_profit_amount , fd.profit_rate,fd.update_time,fd.create_time,fa.status,fa.description FROM financial_activity_join_details  fd LEFT JOIN financial_activity_manage fa ON  fd.activity_id = fa.id
+        where fd.id = #{id}
+    </select>
+
+    <select id="getTotalLock" parameterType="com.spark.bitrade.api.vo.FinancialActivityJoinDetailsVo" resultType="java.math.BigDecimal" >
+        SELECT SUM(amount) from financial_activity_join_details
+        <where>
+            unit = 'BT'AND type = 0 and release_profit_time is null
+            <if test="memberId!=null and memberId > 0">
+                AND member_id = #{memberId}
+            </if>
+        </where>
+    </select>
+    <select id="getAlreadyJoinNum" parameterType="com.spark.bitrade.api.vo.FinancialActivityJoinDetailsVo" resultType="java.lang.Integer" >
+        SELECT SUM(purchase_nums) from financial_activity_join_details
+        <where>
+            unit = 'BT'AND type = 0
+            <if test="memberId!=null and memberId > 0">
+                AND member_id = #{memberId}
+            </if>
+            <if test="activityId!=null and activityId > 0">
+                AND activity_id = #{activityId}
+            </if>
+        </where>
+    </select>
+    <select id="effectiveMiner" parameterType="java.lang.Long" resultType="java.lang.Integer" >
+        select   count(member_id)  from bt_bank_miner_balance_transaction where type = 1  and member_id = #{inviterId}
+    </select>
+
+</mapper>

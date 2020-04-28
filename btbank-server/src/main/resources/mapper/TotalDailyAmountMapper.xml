@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spark.bitrade.repository.mapper.TotalDailyAmountMapper">
+
+
+    <select id="hqbStatTotal" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+    <!-- 活期宝币数 -->
+        SELECT
+        now() as createTime ,
+        'BT' as coin_id,
+        sum(l.lock_amount)+sum(l.plan_in_amount) as hqbAmout
+        FROM member_wallet w LEFT JOIN lock_hqb_member_wallet l
+        ON w.member_id = l.member_id AND w.coin_id = 'BT' AND l.coin_symbol = 'BT'
+    </select>
+
+    <select id="bulkMiningTotal" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+    <!-- 大宗挖矿 -->
+        SELECT
+        now() as createTime ,
+        'BT' as coin_id,
+        sum(balance_amount) as bulkMining
+        FROM member_wallet w LEFT JOIN bt_bank_financial_balance b
+        ON w.member_id = b.member_id AND w.coin_id = 'BT'
+    </select>
+
+    <select id="minerBalanceAmountStat" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+      <!-- 矿池可用 矿池锁仓 -->
+      SELECT
+        now() as createTime,
+        'BT' as coin_id,
+        sum(b.balance_amount) AS minerBalanceAmount,
+        sum(b.lock_amount) AS minerLockAmount
+        FROM member_wallet w LEFT JOIN bt_bank_miner_balance b
+        ON w.member_id = b.member_id AND w.coin_id = 'BT'
+    </select>
+
+    <select id="enterpriseMinerStat" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+    <!-- 企业矿池 -->
+        SELECT
+        now() as createTime,
+        'BT' as coin_id,
+        sum(e.balance) AS enterPriseOrepool
+        FROM member_wallet w LEFT JOIN enterprise_miner e
+        ON w.member_id = e.member_id AND w.coin_id = 'BT'
+    </select>
+
+    <select id="redLockAmountStat" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+    <!-- 红包锁仓 -->
+        SELECT
+        now() as createTime,
+        'BT' as coin_id,
+        sum(r.lock_amount) AS redLockAmount
+        FROM member_wallet w LEFT JOIN red_pack_lock r
+        ON w.member_id = r.member_id AND w.coin_id = 'BT'
+    </select>
+
+    <select id="memberWalletStat" resultType="com.spark.bitrade.repository.entity.TotalDailyAmount">
+        select
+        now() as createTime,
+        coin_id,
+        sum(frozen_balance + balance + lock_balance) AS memberTotal,
+        sum(balance) AS balance,
+        sum(frozen_balance) AS frozenBalance,
+        sum(lock_balance) AS lockBalance
+        from member_wallet group by coin_id
+    </select>
+</mapper>
